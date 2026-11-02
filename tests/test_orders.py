@@ -27,6 +27,14 @@ def test_get_own_order(client):
     assert body["total_cents"] == 8900 + 2 * 1200
 
 
+@pytest.mark.parametrize("user_id, order_id", [(1, 3), (2, 1), (99, 1)])
+def test_get_other_users_order_returns_not_found(client, user_id, order_id):
+    response = client.get(f"/orders/{order_id}", headers=h(user_id))
+    missing = client.get("/orders/999", headers=h(user_id))
+    assert response.status_code == missing.status_code == 404
+    assert response.json() == missing.json() == {"detail": "Order not found"}
+
+
 @pytest.mark.parametrize("headers", [{}, {"X-User-Id": "abc"}, {"X-User-Id": "0"}, {"X-User-Id": "-1"}])
 def test_auth_header_required(client, headers):
     for method, path in [("get", "/orders"), ("get", "/orders/1")]:
