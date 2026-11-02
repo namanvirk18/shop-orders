@@ -1,0 +1,7 @@
+# yaml-language-server: $schema=https://coderabbit.ai/integrations/schema.v2.json
+reviews:
+  review_details: true
+knowledge_base:
+  linked_repositories:
+    - repository: "namanvirk18/shop-gateway"
+      instructions: "API gateway in front of this service. Handles login and forwards requests."
