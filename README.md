@@ -23,7 +23,7 @@ All require `X-User-Id` (positive integer); missing/invalid -> `401`.
 |---|---|---|
 | GET | `/orders` | Current user's orders |
 | POST | `/orders` | Create an order for the current user |
-| GET | `/orders/{order_id}` | One order with items; `404` if it isn't yours |
+| GET | `/orders/{order_id}` | One order with items |
 
 ```bash
 curl -H 'X-User-Id: 1' http://127.0.0.1:8001/orders

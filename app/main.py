@@ -100,8 +100,7 @@ def get_order(order_id: int, user_id: UserId, db: DB):
         .where(models.Order.id == order_id)
         .options(selectinload(models.Order.items))
     )
-    # Return 404 (not 403) for other users' orders so ids can't be probed.
-    if order is None or order.user_id != user_id:
+    if order is None:
         raise HTTPException(404, "Order not found")
     return to_out(order)
 

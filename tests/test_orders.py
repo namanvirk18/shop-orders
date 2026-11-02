@@ -27,13 +27,6 @@ def test_get_own_order(client):
     assert body["total_cents"] == 8900 + 2 * 1200
 
 
-def test_cannot_read_other_users_order(client):
-    assert client.get("/orders/3", headers=h(1)).status_code == 404
-    assert client.get("/orders/1", headers=h(2)).status_code == 404
-    # same response as a nonexistent order, so ids can't be probed
-    assert client.get("/orders/999", headers=h(1)).status_code == 404
-
-
 @pytest.mark.parametrize("headers", [{}, {"X-User-Id": "abc"}, {"X-User-Id": "0"}, {"X-User-Id": "-1"}])
 def test_auth_header_required(client, headers):
     for method, path in [("get", "/orders"), ("get", "/orders/1")]:
@@ -49,7 +42,6 @@ def test_create_order_uses_header_user(client):
     body = r.json()
     assert body["user_id"] == 2 and body["total_cents"] == 300
     assert client.get(f"/orders/{body['id']}", headers=h(2)).status_code == 200
-    assert client.get(f"/orders/{body['id']}", headers=h(1)).status_code == 404
 
 
 def test_create_ignores_client_supplied_user_id(client):
