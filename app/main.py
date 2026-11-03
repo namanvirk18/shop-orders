@@ -109,7 +109,7 @@ def get_order(order_id: int, user_id: UserId, db: DB):
 def reorder(order_id: int, user_id: UserId, db: DB):
     original = db.scalar(
         select(models.Order)
-        .where(models.Order.id == order_id)
+        .where(models.Order.id == order_id, models.Order.user_id == user_id)
         .options(selectinload(models.Order.items))
     )
     if original is None:
