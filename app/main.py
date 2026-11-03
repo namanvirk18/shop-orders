@@ -105,6 +105,32 @@ def get_order(order_id: int, user_id: UserId, db: DB):
     return to_out(order)
 
 
+@app.post("/orders/{order_id}/reorder", response_model=schemas.OrderOut, status_code=201)
+def reorder(order_id: int, user_id: UserId, db: DB):
+    original = db.scalar(
+        select(models.Order)
+        .where(models.Order.id == order_id, models.Order.user_id == user_id)
+        .options(selectinload(models.Order.items))
+    )
+    if original is None:
+        raise HTTPException(404, "Order not found")
+    order = models.Order(
+        user_id=user_id,
+        items=[
+            models.OrderItem(
+                product_name=i.product_name,
+                quantity=i.quantity,
+                unit_price_cents=i.unit_price_cents,
+            )
+            for i in original.items
+        ],
+    )
+    db.add(order)
+    db.commit()
+    db.refresh(order)
+    return to_out(order)
+
+
 if __name__ == "__main__":
     import uvicorn
 

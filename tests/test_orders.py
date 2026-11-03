@@ -79,3 +79,33 @@ def test_seed_is_idempotent():
         main.seed(db)
         main.seed(db)
         assert db.scalar(select(func.count()).select_from(models.Order)) == 3
+
+
+def test_reorder_copies_items_into_new_order(client):
+    original = client.get("/orders/1", headers=h(1)).json()
+    r = client.post("/orders/1/reorder", headers=h(1))
+    assert r.status_code == 201
+    new = r.json()
+    assert new["id"] not in (1, 2, 3)
+    assert new["user_id"] == 1
+    assert new["total_cents"] == original["total_cents"]
+    strip = lambda items: [(i["product_name"], i["quantity"], i["unit_price_cents"]) for i in items]
+    assert strip(new["items"]) == strip(original["items"])
+    assert {i["id"] for i in new["items"]}.isdisjoint({i["id"] for i in original["items"]})
+    assert client.get("/orders/1", headers=h(1)).json() == original
+    assert [o["id"] for o in client.get("/orders", headers=h(1)).json()] == [1, 2, new["id"]]
+
+
+@pytest.mark.parametrize("user_id, order_id", [(1, 3), (2, 1), (99, 1), (1, 999)])
+def test_reorder_other_or_missing_order_returns_not_found(client, user_id, order_id):
+    r = client.post(f"/orders/{order_id}/reorder", headers=h(user_id))
+    assert r.status_code == 404
+    assert r.json() == {"detail": "Order not found"}
+    # no order was created for anyone
+    assert [o["id"] for o in client.get("/orders", headers=h(1)).json()] == [1, 2]
+    assert [o["id"] for o in client.get("/orders", headers=h(2)).json()] == [3]
+
+
+@pytest.mark.parametrize("headers", [{}, {"X-User-Id": "abc"}, {"X-User-Id": "0"}])
+def test_reorder_requires_auth(client, headers):
+    assert client.post("/orders/1/reorder", headers=headers).status_code == 401
