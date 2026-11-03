@@ -95,6 +95,7 @@ def create_order(body: schemas.OrderIn, user_id: UserId, db: DB):
 
 @app.get("/orders/{order_id}", response_model=schemas.OrderOut)
 def get_order(order_id: int, user_id: UserId, db: DB):
+    """Return one order with its items."""
     order = db.scalar(
         select(models.Order)
         .where(models.Order.id == order_id, models.Order.user_id == user_id)
