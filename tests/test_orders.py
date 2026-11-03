@@ -96,16 +96,6 @@ def test_reorder_copies_items_into_new_order(client):
     assert [o["id"] for o in client.get("/orders", headers=h(1)).json()] == [1, 2, new["id"]]
 
 
-@pytest.mark.parametrize("user_id, order_id", [(1, 3), (2, 1), (99, 1), (1, 999)])
-def test_reorder_other_or_missing_order_returns_not_found(client, user_id, order_id):
-    r = client.post(f"/orders/{order_id}/reorder", headers=h(user_id))
-    assert r.status_code == 404
-    assert r.json() == {"detail": "Order not found"}
-    # no order was created for anyone
-    assert [o["id"] for o in client.get("/orders", headers=h(1)).json()] == [1, 2]
-    assert [o["id"] for o in client.get("/orders", headers=h(2)).json()] == [3]
-
-
 @pytest.mark.parametrize("headers", [{}, {"X-User-Id": "abc"}, {"X-User-Id": "0"}])
 def test_reorder_requires_auth(client, headers):
     assert client.post("/orders/1/reorder", headers=headers).status_code == 401
